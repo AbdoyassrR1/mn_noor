@@ -24,16 +24,17 @@ def create_app():
     app = Flask(__name__)
 
 
-    # DB_USER = getenv(DB_USER)
-    # DB_PASSWORD = getenv(DB_PASSWORD)
-    # DB_HOST = getenv(DB_HOST)
-    # DB_NAME = getenv(DB_NAME)
-    # SECRET_KEY = getenv(SECRET_KEY)
+    DB_USER = getenv(DB_USER)
+    DB_PASSWORD = getenv(DB_PASSWORD)
+    DB_HOST = getenv(DB_HOST)
+    DB_NAME = getenv(DB_NAME) # railway
+    SECRET_KEY = getenv(SECRET_KEY)
 
     # Configure the app (set database URI, secret key, etc.)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://username:password@host/database_name"
-    app.config['SECRET_KEY'] = "my_secret"
+    # app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    app.config['SECRET_KEY'] = f"SECRET_KEY"
 
     # Initialize the app
     db.init_app(app)

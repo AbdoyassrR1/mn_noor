@@ -13,7 +13,7 @@ class Session(db.Model):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     length = Column(Float, nullable=False)
-    type = Column(Enum("private", "group"), nullable=False)
+    type = Column(Enum("private", "group", name="session_type"), nullable=False)
 
     user_id = Column(String(50), ForeignKey("users.id"), nullable=False)
 

@@ -19,7 +19,7 @@ class User(BaseModel, UserMixin):
     last_name = Column(String(20), nullable=False)
     photo = Column(String(100), nullable=True)
     birth_date = Column(Date, nullable=False)
-    gender = Column(Enum("MALE", "FEMALE"), nullable=False)
+    gender = Column(Enum("MALE", "FEMALE", name="gender"), nullable=False)
     nationality = Column(String(15), nullable=False)
     country = Column(String(15), nullable=False)
     time_zone = Column(String(50), nullable=False)

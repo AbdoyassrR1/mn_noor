@@ -11,7 +11,7 @@ class Package(BaseModel):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     package = Column(String(50), nullable=False, unique=True)
-    session_type = Column(Enum("private", "group"), nullable=False)
+    session_type = Column(Enum("private", "group", name='session_type'), nullable=False)
     price = Column(Float, nullable=False)
     duration = Column(Integer, nullable=False)
     max_sessions = Column(Integer, nullable=False)

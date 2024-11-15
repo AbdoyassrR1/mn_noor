@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt update && apt install -y python3-pip
+
 # Ensure pip is installed in the virtual environment
 python3 -m ensurepip --upgrade
 pip install --upgrade pip

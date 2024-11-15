@@ -11,9 +11,3 @@ flask db migrate
 
 # Apply the migration to the database
 flask db upgrade
-
-# Navigate back to the root directory
-cd ..
-
-# Run the Flask app
-python3 run.py

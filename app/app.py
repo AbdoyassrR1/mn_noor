@@ -32,7 +32,7 @@ def create_app():
 
     # Configure the app (set database URI, secret key, etc.)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:RootPass!12@localhost/mn_noor"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://username:password@host/database_name"
     app.config['SECRET_KEY'] = "my_secret"
 
     # Initialize the app

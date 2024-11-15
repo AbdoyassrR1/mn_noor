@@ -24,11 +24,11 @@ def create_app():
     app = Flask(__name__)
 
 
-    DB_USER = getenv(DB_USER)
-    DB_PASSWORD = getenv(DB_PASSWORD)
-    DB_HOST = getenv(DB_HOST)
-    DB_NAME = getenv(DB_NAME)
-    SECRET_KEY = getenv(SECRET_KEY)
+    DB_USER = getenv("DB_USER")
+    DB_PASSWORD = getenv("DB_PASSWORD")
+    DB_HOST = getenv("DB_HOST")
+    DB_NAME = getenv("DB_NAME")
+    SECRET_KEY = getenv("SECRET_KEY")
 
     # Configure the app (set database URI, secret key, etc.)
 

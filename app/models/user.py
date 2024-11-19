@@ -37,6 +37,7 @@ class User(BaseModel, UserMixin):
 
     # one-to-many relationship
     tokens = relationship("ResetToken", backref="user")
+    teach_groups = relationship("Group", backref="teacher")
     
     # many-to-many relationship
     groups = relationship("Group", secondary="user_groups", backref="users")

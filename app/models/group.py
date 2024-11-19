@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 from app.models.base import BaseModel
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Date, Enum
+from sqlalchemy import Column, String, Integer, Date, Enum, ForeignKey
 
 
 class Group(BaseModel):
@@ -14,6 +14,8 @@ class Group(BaseModel):
     status = Column(Enum("coming", "running", "finished", name='group_status'), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+
+    teacher_id = Column(String(50), ForeignKey("users.id"), nullable=True)
 
     def __repr__(self):
         return f"<group: {self.group}, size: {self.size}, status: {self.status}>",

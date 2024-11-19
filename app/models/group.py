@@ -14,3 +14,22 @@ class Group(BaseModel):
     status = Column(Enum("coming", "running", "finished", name='group_status'), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+
+    def __repr__(self):
+        return f"<group: {self.group}, size: {self.size}, status: {self.status}>",
+
+
+    # Convert to dictionary for API response
+    def to_dict(self):
+        TIME = "%a, %d %b %Y %I:%M:%S %p"
+        return {
+            "id": self.id,
+            "group": self.group,
+            "size": self.size,
+            "days": self.days,
+            "status": self.status,
+            "start_date": self.start_date.strftime(TIME),
+            "end_date": self.end_date.strftime(TIME),
+            "created_at": self.created_at.strftime(TIME),
+            "updated_at": self.updated_at.strftime(TIME),
+        }

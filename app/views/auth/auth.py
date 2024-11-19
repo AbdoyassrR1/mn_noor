@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from flask import Blueprint, jsonify, request, abort
-from flask_login import login_user, logout_user, login_required,current_user
+from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
 import re
 from app.app import db, limiter
@@ -263,7 +263,7 @@ def register_student():
 @limiter.limit("5/minute")
 def login():
     # check if logged in
-    if current_user:
+    if current_user.is_authenticated:
         abort(400, description="You are already logged in.")
     # get user data
     user_data = request.get_json()

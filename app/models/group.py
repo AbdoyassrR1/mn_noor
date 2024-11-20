@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 from app.models.base import BaseModel
-from datetime import datetime
 from sqlalchemy import Column, String, Integer, Date, Enum, ForeignKey
-
+from sqlalchemy.orm import relationship
 
 class Group(BaseModel):
     __tablename__ = "groups"
@@ -16,6 +15,9 @@ class Group(BaseModel):
     end_date = Column(Date, nullable=False)
 
     teacher_id = Column(String(50), ForeignKey("users.id"), nullable=True)
+
+    # # many-to-many relationship
+    days = relationship("Day", secondary="group_days", backref="groups")
 
     def __repr__(self):
         return f"<group: {self.group}, size: {self.size}, status: {self.status}>",

@@ -9,7 +9,6 @@ class Group(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     group = Column(String(50), nullable=False, unique=True)
     size = Column(Integer, nullable=False)
-    days = Column(String(30), nullable=False)
     status = Column(Enum("coming", "running", "finished", name='group_status'), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)

@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-from app.app import db, local_timezone
-from datetime import datetime
+from app.app import db
 from sqlalchemy import Column, Integer, Enum
 
 

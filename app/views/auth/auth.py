@@ -16,7 +16,11 @@ auth = Blueprint("auth", __name__)
 def register_teacher():
     # Retrieve data from the request body as JSON
     user_data = request.get_json()
-    
+
+    if not user_data:
+        abort(400, description="Missing JSON object")
+
+
     # Required fields for a teacher registration
     required_fields = ["username", "email", "password", "phone_number", "first_name",
                        "last_name", "birth_date", "gender", "nationality", "country",
@@ -141,7 +145,10 @@ def register_teacher():
 def register_student():
     # Retrieve data from the request body as JSON
     user_data = request.get_json()
-    
+
+    if not user_data:
+        abort(400, description="Missing JSON object")
+
     # Required fields for a Student registration
     required_fields = ["username", "email", "password", "phone_number", "first_name",
                        "last_name", "birth_date", "gender", "nationality", "country",
@@ -267,8 +274,20 @@ def login():
         abort(400, description="You are already logged in.")
     # get user data
     user_data = request.get_json()
+    if not user_data:
+        abort(400, description="Missing JSON object")
 
     required_fields = ["email", "password"]
+
+    # Check for missing fields
+    missing_fields = [field for field in required_fields if field not in user_data]
+    if missing_fields:
+        abort(400, description=f"Missing fields: {', '.join(missing_fields)}")
+    
+    # Check for empty fields
+    empty_fields = [field for field in required_fields if not user_data[field]]
+    if empty_fields:
+        abort(400, description=f"Empty fields: {', '.join(empty_fields)}")
 
     user = User.query.filter_by(email=user_data["email"]).first()
 

@@ -8,3 +8,6 @@ class Day(db.Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     day = Column(Enum("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", name="day_of_week"), nullable=False, unique=True)
+
+    def __repr__(self):
+        return f"<Day(day={self.day})>"

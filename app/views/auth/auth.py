@@ -17,10 +17,6 @@ def register_teacher():
     # Retrieve data from the request body as JSON
     user_data = request.get_json()
 
-    if not user_data:
-        abort(400, description="Missing JSON object")
-
-
     # Required fields for a teacher registration
     required_fields = ["username", "email", "password", "phone_number", "first_name",
                        "last_name", "birth_date", "gender", "nationality", "country",
@@ -146,9 +142,6 @@ def register_student():
     # Retrieve data from the request body as JSON
     user_data = request.get_json()
 
-    if not user_data:
-        abort(400, description="Missing JSON object")
-
     # Required fields for a Student registration
     required_fields = ["username", "email", "password", "phone_number", "first_name",
                        "last_name", "birth_date", "gender", "nationality", "country",
@@ -267,15 +260,13 @@ def register_student():
 
 # Login route
 @auth.route("/login", methods=["POST"])
-@limiter.limit("5/minute")
+# @limiter.limit("5/minute")
 def login():
     # check if logged in
     if current_user.is_authenticated:
         abort(400, description="You are already logged in.")
     # get user data
     user_data = request.get_json()
-    if not user_data:
-        abort(400, description="Missing JSON object")
 
     required_fields = ["email", "password"]
 

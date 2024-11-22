@@ -7,4 +7,4 @@ class Day(db.Model):
     __tablename__ = "days"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Enum("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", name="day_of_week"), nullable=False, unique=True)
+    day = Column(Enum("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", name="day_of_week"), nullable=False, unique=True)

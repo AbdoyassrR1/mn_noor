@@ -28,18 +28,22 @@ class Group(BaseModel):
     def to_dict(self):
         TIME = "%a, %d %b %Y %I:%M:%S %p"
         TIME_WITH_AMPM = "%I:%M:%S %p"
-        return {
-            "id": self.id,
-            "group": self.group,
-            "size": self.size,
-            "days": [
+
+        days_with_time = [
             {
                 "id": day.id,
                 "day": day.day,
                 "time": group_day.time.strftime(TIME_WITH_AMPM)  # Format time with AM/PM
             }
             for day, group_day in zip(self.days, self.group_days)  # Pair days with group_days
-        ],
+        ]
+
+        return {
+            "id": self.id,
+            "group": self.group,
+            "size": self.size,
+            "days": days_with_time,
+            "days_per_week": len(days_with_time),
             "status": self.status,
             "start_date": self.start_date.strftime(TIME),
             "end_date": self.end_date.strftime(TIME),

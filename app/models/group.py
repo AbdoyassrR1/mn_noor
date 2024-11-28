@@ -15,7 +15,7 @@ class Group(BaseModel):
 
     teacher_id = Column(String(50), ForeignKey("users.id"), nullable=True)
 
-    group_days = relationship("GroupDay", backref="group")
+    group_days = relationship("GroupDay", backref="group", cascade="all, delete-orphan", passive_deletes=True)
 
     # # many-to-many relationship
     days = relationship("Day", secondary="group_days", backref="groups")

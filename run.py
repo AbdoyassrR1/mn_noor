@@ -18,6 +18,13 @@ def unauthorized_error(error):
         "message": str(error.description)
         }), 401
 
+@app.errorhandler(403)
+def forbidden_error(error):
+    return jsonify({
+        "status": "error: Forbidden",
+        "message": str(error.description)
+        }), 403
+
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({

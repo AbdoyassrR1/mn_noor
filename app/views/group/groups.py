@@ -79,7 +79,7 @@ def get_groups():
 @limiter.limit("5/minute")  # Rate limit to prevent abuse
 def create_group():
     # Get the current logged-in user
-    user = User.query.filter_by(id=current_user.id).first()
+    user = User.query.get(current_user.id)
 
     if not user:
         abort(404, description="User not found")
@@ -108,10 +108,9 @@ def create_group():
         abort(409, description="Group name already exists.")
 
     # Validate group name
-    if not re.match(r"^[a-zA-Z0-9_\-\s]{2,100}$", group_data["group"]):
+    if not isinstance(group_data["group"], str) or not re.match(r"^[a-zA-Z0-9_\-\s]{2,100}$", group_data["group"]):
         abort(400, description="Group name must be 2-100 characters long and can include letters, numbers, spaces, underscores, and hyphens.")
 
-    
     # Validate date format
     try:
         start_date = datetime.strptime(group_data["start_date"], "%Y-%m-%d").date()
@@ -123,7 +122,6 @@ def create_group():
         abort(400, description="End date must be after start date.")
 
     # Validate `status` field
-    valid_statuses = ["coming", "running", "finished"]
     status= ""
     date_now = datetime.strptime(str(datetime.today().date()), "%Y-%m-%d").date()
 
@@ -131,12 +129,12 @@ def create_group():
         status = "coming"
     elif start_date <= date_now and end_date >= date_now:
         status = "running"
-    else:
+    elif date_now > end_date:
         status = "finished"
 
     # validate size 
     if type(group_data["size"]) is not int or group_data["size"] <= 0:
-        abort(400, description="Size Must be a number starting from 1.")
+        abort(400, description="Size must be an integer greater than 0.")
 
     # validate days and times
 
@@ -199,3 +197,173 @@ def create_group():
         "message": "Group Has Been Created Successfully.",
         "group": new_group.to_dict()
         }), 201
+
+
+
+@groups.route("/update_group/<group_id>", methods=["PATCH"])
+@login_required  # Ensure the user is logged in
+def update_group(group_id):
+
+    # Get the current logged-in user
+    user = User.query.get(current_user.id)
+    if not user:
+        abort(404, description="User not found")
+
+    # Check if the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can update groups.")
+    
+    group_to_update = Group.query.get(group_id)
+
+    if not group_to_update:
+        abort(404, description="Group not Found")
+
+    updated_data = request.get_json() 
+
+    allowed_fields = ["group", "size", "start_date",
+                      "end_date", "day_ids"]
+
+    is_updated = False
+
+    for key, value in updated_data.items():
+        if key in allowed_fields:
+
+            if key == "group":
+                # Check uniqueness of the group name
+                if Group.query.filter_by(group=value).first():
+                    abort(409, description="Group name already exists.")
+                # Validate group name
+                if not isinstance(value, str) or not re.match(r"^[a-zA-Z0-9_\-\s]{2,100}$", value):
+                    abort(400, description="Group name must be 2-100 characters long and can include letters, numbers, spaces, underscores, and hyphens.")
+                setattr(group_to_update, key, value)
+                is_updated = True
+            
+            if key == "size":
+                # validate size 
+                if type(value) is not int or value <= 0:
+                    abort(400, description="Size must be an integer greater than 0.")
+                setattr(group_to_update, key, value)
+                is_updated = True
+
+            if key == "start_date":
+                # Validate date format
+                try:
+                    start_date = datetime.strptime(value, "%Y-%m-%d").date()
+                except ValueError:
+                    abort(400, description="Invalid date format. Use YYYY-MM-DD")
+
+                if start_date >= group_to_update.end_date:
+                    abort(400, description="End date must be after start date.")
+
+                setattr(group_to_update, key, start_date)
+
+                # Validate `status` field
+                status= ""
+                date_now = datetime.strptime(str(datetime.today().date()), "%Y-%m-%d").date()
+
+                if start_date > date_now:
+                    status = "coming"
+                elif start_date <= date_now and group_to_update.end_date >= date_now:
+                    status = "running"
+                elif date_now > group_to_update.end_date:
+                    status = "finished"
+
+                group_to_update.status = status
+
+                is_updated = True
+
+            if key == "end_date":
+                # Validate date format
+                try:
+                    end_date = datetime.strptime(value, "%Y-%m-%d").date()
+                except ValueError:
+                    abort(400, description="Invalid date format. Use YYYY-MM-DD")
+
+                if group_to_update.start_date >= end_date:
+                    abort(400, description="End date must be after start date.")
+
+                setattr(group_to_update, key, end_date)
+
+                # Validate `status` field
+                status= ""
+                date_now = datetime.strptime(str(datetime.today().date()), "%Y-%m-%d").date()
+
+                if group_to_update.start_date > date_now:
+                    status = "coming"
+                elif group_to_update.start_date <= date_now and end_date >= date_now:
+                    status = "running"
+                elif date_now > end_date:
+                    status = "finished"
+
+                group_to_update.status = status
+
+                is_updated = True
+
+            if key == "day_ids":
+                # validate days and times
+
+                day_ids_with_times  = updated_data[key]
+
+                if not day_ids_with_times or not  isinstance(day_ids_with_times , list) or not all(
+                    isinstance(entry, dict) and "day_id" in entry and "time" in entry for entry in day_ids_with_times ):
+                    abort(400, description="day_ids must be a list of objects with 'day_id' and 'time'.")
+
+                day_ids = [entry["day_id"] for entry in day_ids_with_times]
+
+                valid_days = Day.query.filter(Day.id.in_([day_id for day_id in day_ids])).all()
+
+                # Check if all provided day IDs are valid
+                valid_day_ids = {day.id for day in valid_days}
+                invalid_day_ids = [day_id for day_id in day_ids if day_id not in valid_day_ids]
+
+                if invalid_day_ids:
+                    abort(400, description=f"Invalid day IDs provided: {', '.join(invalid_day_ids)}")
+
+                if len(day_ids) != len(set(day_ids)):
+                    abort(400, description="duplicate day IDs provided.")
+                
+                # Validate times
+                for entry in day_ids_with_times:
+                    try:
+                        # Validate and convert time to 24-hour format
+                        time_24_hour = datetime.strptime(entry["time"], "%I:%M:%S %p").strftime("%H:%M:%S")
+                        entry["time"] = time_24_hour
+                    except ValueError:
+                        abort(400, description=f"Invalid time format for day_id {entry['day_id']}. Use HH:MM:SS AM/PM.")
+                
+                # update associated GroupDay entries
+                existing_group_days = {group_day.day_id: group_day for group_day in group_to_update.group_days}
+                # Update or create new GroupDay entries
+                for entry in day_ids_with_times:
+                    day_id = entry["day_id"]
+                    time = entry["time"]
+
+                    if day_id in existing_group_days:
+                        # Update existing entry
+                        existing_group_days[day_id].time = time
+                    else:
+                        # Create new entry
+                        new_group_day = GroupDay(group_id=group_to_update.id, day_id=day_id, time=time)
+                        db.session.add(new_group_day)
+
+                # Remove unused GroupDay entries
+                current_day_ids = {entry["day_id"] for entry in day_ids_with_times}
+                for day_id, group_day in existing_group_days.items():
+                    if day_id not in current_day_ids:
+                        db.session.delete(group_day)
+
+                is_updated = True
+
+
+    # If no changes were made, return an error
+    if not is_updated:
+        abort(400, description="No valid fields to update or no changes made")
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": "Group Has Been Updated Successfully.",
+        "group": group_to_update.to_dict()
+    }), 200

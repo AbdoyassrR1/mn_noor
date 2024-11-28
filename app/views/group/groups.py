@@ -18,7 +18,7 @@ groups = Blueprint("groups", __name__)
 def get_groups():
 
     # Get the current logged-in user
-    user = User.query.filter_by(id=current_user.id).first()
+    user = User.query.get(current_user.id)
     if not user:
         abort(404, description="User not found")
 

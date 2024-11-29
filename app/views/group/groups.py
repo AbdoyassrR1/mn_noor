@@ -230,7 +230,7 @@ def update_group(group_id):
 
             if key == "group":
                 # Check uniqueness of the group name
-                if Group.query.filter_by(group=value).first():
+                if Group.query.filter(Group.group == value, Group.id != group_to_update.id).first():
                     abort(409, description="Group name already exists.")
                 # Validate group name
                 if not isinstance(value, str) or not re.match(r"^[a-zA-Z0-9_\-\s]{2,100}$", value):

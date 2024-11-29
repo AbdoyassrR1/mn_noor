@@ -373,7 +373,7 @@ def update_group(group_id):
 
 @groups.route("/delete_group/<int:group_id>", methods=["DELETE"])
 @login_required  # Ensure the user is logged in
-@limiter.limit("2/minute")
+@limiter.limit("5/minute")
 def delete_group(group_id):
 
     # Get the current logged-in user
@@ -396,4 +396,52 @@ def delete_group(group_id):
     return jsonify({
         "status": "success",
         "message": f"Group with ID: {group_to_delete.id} Has Been Deleted Successfully."
+    }), 200
+
+
+@groups.route("/add_student_to_group/<int:group_id>/<student_id>", methods=["POST"])
+@login_required  # Ensure the user is logged in
+@limiter.limit("10/minute")
+def add_student_to_group(group_id, student_id):
+
+    # Get the current logged-in user
+    # user = User.query.get(current_user.id)
+    user = current_user
+    if not user:
+        abort(404, description="User not found")
+
+    # Check if the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can add students to groups.")
+    
+    # check if the group is exists
+    group_to_join = Group.query.get(group_id)
+    if not group_to_join:
+        abort(404, description="Group not Found")
+
+    # check if the student is exists
+    student_to_add = User.query.get(student_id)
+    if not student_to_add:
+        abort(404, description="Student not Found")
+
+    # Check student role
+    if student_to_add.role.role != "student":
+        abort(403, description="Only students can be added to groups.")
+
+    # check if the student already in the group
+    if student_to_add in group_to_join.users:
+        abort(409, description=f"Student: ({student_to_add.username}) is already a member of this group.")
+
+    # Check if the group has space for more students
+    if len(group_to_join.users) >= group_to_join.size:
+        abort(400, description="Group capacity has been reached.")
+
+    group_to_join.users.append(student_to_add)
+    db.session.commit()
+
+
+    return jsonify({
+        "status": "success",
+        "message": f"Student: ({student_to_add.username}) Has Been Added Successfully to group: ({group_to_join.group}).",
+        "student_list": [student.username for student in group_to_join.users]
     }), 200

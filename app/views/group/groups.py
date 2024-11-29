@@ -443,5 +443,6 @@ def add_student_to_group(group_id, student_id):
     return jsonify({
         "status": "success",
         "message": f"Student: ({student_to_add.username}) Has Been Added Successfully to group: ({group_to_join.group}).",
-        "student_list": [student.username for student in group_to_join.users]
+        "student_list": [student.username for student in group_to_join.users],
+        "remaining_capacity": group_to_join.size - len(group_to_join.users)
     }), 200

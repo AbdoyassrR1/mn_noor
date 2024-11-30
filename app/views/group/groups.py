@@ -452,7 +452,7 @@ def add_student_to_group(group_id, student_id):
     }), 200
 
 
-@groups.route("/get_student_list_of_group/<int:group_id>/", methods=["GET"])
+@groups.route("/get_student_list_of_group/<int:group_id>/", methods=["GET"], strict_slashes=False)
 @login_required  # Ensure the user is logged in
 def get_student_list_of_group(group_id):
 

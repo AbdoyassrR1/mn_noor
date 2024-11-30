@@ -15,10 +15,10 @@ class Group(BaseModel):
 
     teacher_id = Column(String(50), ForeignKey("users.id"), nullable=True)
 
-    group_days = relationship("GroupDay", backref="group", cascade="all, delete-orphan", passive_deletes=True)
+    group_days = relationship("GroupDay", back_populates="group", cascade="all, delete-orphan", passive_deletes=True, overlaps="days")
 
     # # many-to-many relationship
-    days = relationship("Day", secondary="group_days", backref="groups")
+    days = relationship("Day", secondary="group_days", back_populates="groups", overlaps="group_days")
 
     def __repr__(self):
         return f"<group: {self.group}, size: {self.size}, status: {self.status}>"

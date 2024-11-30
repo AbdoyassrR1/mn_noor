@@ -54,4 +54,5 @@ def internal_server_error(error):
         }), 500
 
 if __name__ == "__main__":
+    app.url_map.strict_slashes = False
     app.run(host="localhost", debug=True)

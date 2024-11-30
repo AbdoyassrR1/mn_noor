@@ -3,12 +3,12 @@ from flask import Blueprint, jsonify, request, abort
 from flask_login import login_required, current_user
 from datetime import datetime
 import re
+from sqlalchemy.orm import joinedload
 from app.app import db, limiter
 from app.models.group import Group
 from app.models.user import User
 from app.models.day import Day
 from app.models.group_day import GroupDay
-
 
 groups = Blueprint("groups", __name__)
 
@@ -417,12 +417,12 @@ def add_student_to_group(group_id, student_id):
     # check if the group is exists
     group_to_join = Group.query.get(group_id)
     if not group_to_join:
-        abort(404, description="Group not Found")
+        abort(404, description=f"Group with ID: {group_id} not Found")
 
     # check if the student is exists
     student_to_add = User.query.get(student_id)
     if not student_to_add:
-        abort(404, description="Student not Found")
+        abort(404, description=f"Student with ID: {student_id} not Found")
 
     # Check student role
     if student_to_add.role.role != "student":
@@ -448,5 +448,38 @@ def add_student_to_group(group_id, student_id):
             "name": group_to_join.group,
             "remaining_capacity": group_to_join.size - len(group_to_join.users),
             "students": [{"id": user.id, "username": user.username} for user in group_to_join.users]
+        }
+    }), 200
+
+
+@groups.route("/get_student_list_of_group/<int:group_id>/", methods=["GET"])
+@login_required  # Ensure the user is logged in
+def get_student_list_of_group(group_id):
+
+    # Get the current logged-in user
+    user = current_user
+    if not user:
+        abort(404, description="User not found")
+
+    # Check if the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can view students list of groups.")
+    
+    # check if the group is exists
+    # group_to_view = Group.query.get(group_id) # inefficient way query for each uesr in the list
+    group_to_view = Group.query.options(joinedload(Group.users)).get(group_id) # query one time for the group and uesrs in the list
+    if not group_to_view:
+        abort(404, description=f"Group with ID: {group_id} not Found")
+
+    return jsonify({
+        "status": "success",
+        "message": f"Student list has been retrieved for group: ({group_to_view.group}).",
+        "group": {
+            "id": group_to_view.id,
+            "name": group_to_view.group,
+            "status": group_to_view.status,
+            "remaining_capacity": group_to_view.size - len(group_to_view.users),
+            "total_students": len(group_to_view.users),
+            "students": [{"id": user.id, "username": user.username} for user in group_to_view.users]
         }
     }), 200

@@ -447,7 +447,7 @@ def add_student_to_group(group_id, student_id):
             "id": group_to_join.id,
             "name": group_to_join.group,
             "remaining_capacity": group_to_join.size - len(group_to_join.users),
-            "students": [{"id": user.id, "username": user.username} for user in group_to_join.users]
+            "current_students": [{"id": user.id, "username": user.username} for user in group_to_join.users]
         }
     }), 200
 
@@ -482,4 +482,50 @@ def get_student_list_of_group(group_id):
             "total_students": len(group_to_view.users),
             "students": [{"id": user.id, "username": user.username} for user in group_to_view.users]
         }
+    }), 200
+
+
+
+@groups.route("/remove_student_from_group/<int:group_id>/<student_id>", methods=["DELETE"])
+@login_required  # Ensure the user is logged in
+@limiter.limit("10/minute")  # Rate limit the endpoint
+def remove_student_from_group(group_id, student_id):
+
+    # Get the current logged-in user
+    user = current_user
+    if not user:
+        abort(404, description="User not found")
+
+    # Ensure the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can remove students from groups.")
+
+    # Check if the group exists
+    group_to_edit = Group.query.options(joinedload(Group.users)).get(group_id)
+    if not group_to_edit:
+        abort(404, description=f"Group with ID {group_id} not found.")
+
+    # Check if the student exists
+    student_to_remove = User.query.get(student_id)
+    if not student_to_remove:
+        abort(404, description=f"Student with ID {student_id} not found.")
+
+    # Check if the user is a student
+    if student_to_remove.role.role != "student":
+        abort(403, description="Only students can be removed from groups.")
+
+    # Ensure the student is a member of the group
+    if student_to_remove not in group_to_edit.users:
+        abort(404, description=f"Student ({student_to_remove.username}) is not a member of the group ({group_to_edit.group}).")
+
+    # Remove the student from the group
+    group_to_edit.users.remove(student_to_remove)
+    db.session.commit()
+
+    # Return a response
+    return jsonify({
+        "status": "success",
+        "message": f"Student ({student_to_remove.username}) has been successfully removed from the group ({group_to_edit.group}).",
+        "remaining_students": [{"id": user.id, "username": user.username} for user in group_to_edit.users],
+        "remaining_capacity": group_to_edit.size - len(group_to_edit.users)
     }), 200

@@ -582,3 +582,54 @@ def add_teacher_to_group(group_id, teacher_id):
 
 
 
+@groups.route("/get_teacher_of_group/<int:group_id>/", methods=["GET"], strict_slashes=False)
+@login_required  # Ensure the user is logged in
+@limiter.limit("10/minute")
+def get_teacher_of_group(group_id):
+
+    # Get the current logged-in user
+    user = current_user
+
+    # check if the group is exists
+    group_to_view = Group.query.options(
+    joinedload(Group.teacher),  # Prefetch the teacher relationship
+    joinedload(Group.users)     # Prefetch the users relationship
+    ).get(group_id)
+    if not group_to_view:
+        abort(404, description=f"Group with ID: {group_id} not Found")
+
+    # Access control
+    if user.role.role == "admin":
+        # Admins can access any group
+        pass
+    elif user.role.role == "teacher" and group_to_view.teacher_id != user.id:
+        abort(403, description="You can only view groups you teach.")
+    elif user.role.role == "student" and user not in group_to_view.users:
+        abort(403, description="You can only view teachers for groups you are enrolled in.")
+    
+    # Prepare response message
+    message = (
+        f"Teacher of group ({group_to_view.group}) is: {group_to_view.teacher.username}"
+        if group_to_view.teacher else
+        f"No teacher assigned to group ({group_to_view.group})."
+    )
+    
+    return jsonify({
+        "status": "success",
+        "message": message,
+        "group": {
+            "id": group_to_view.id,
+            "name": group_to_view.group,
+            "teacher": {
+                "id": group_to_view.teacher.id,
+                "username": group_to_view.teacher.username,
+                "email": group_to_view.teacher.email,
+                "phone_number": group_to_view.teacher.phone_number,
+                "first_name": group_to_view.teacher.first_name,
+                "last_name": group_to_view.teacher.last_name
+            } if group_to_view.teacher else None
+        }
+    })
+
+
+

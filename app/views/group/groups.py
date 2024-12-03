@@ -529,3 +529,56 @@ def remove_student_from_group(group_id, student_id):
         "remaining_students": [{"id": user.id, "username": user.username} for user in group_to_edit.users],
         "remaining_capacity": group_to_edit.size - len(group_to_edit.users)
     }), 200
+
+
+
+@groups.route("/add_teacher_to_group/<int:group_id>/<teacher_id>", methods=["POST"])
+@login_required  # Ensure the user is logged in
+def add_teacher_to_group(group_id, teacher_id):
+
+    # Get the current logged-in user
+    user = current_user
+    if not user:
+        abort(404, description="User not found")
+
+    # Check if the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can teachers to groups.")
+    
+    # check if the group is exists
+    group_to_teach = Group.query.get(group_id)
+    if not group_to_teach:
+        abort(404, description=f"Group with ID: {group_id} not Found")
+
+    # check if there is a teacher already in the group
+    if group_to_teach.teacher_id:
+        abort(409, description=f"this group already has a teacher: {group_to_teach.teacher.username}.")
+
+    # check if the Teacher is exists
+    teacher_to_add = User.query.get(teacher_id)
+    if not teacher_to_add:
+        abort(404, description=f"Teacher with ID: {teacher_id} not Found")
+
+    # Check teacher role
+    if teacher_to_add.role.role != "teacher":
+        abort(403, description="Only teachers can teach groups.")
+
+    # check if the teacher already in the group
+    if group_to_teach in teacher_to_add.teach_groups:
+        abort(409, description=f"Teacher: ({teacher_to_add.username}) is already a teaching this group.")
+    
+    group_to_teach.teacher_id = teacher_to_add.id
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Teacher ({teacher_to_add.username}) has been added to group ({group_to_teach.group}).",
+        "group": {
+            "id": group_to_teach.id,
+            "name": group_to_teach.group,
+            "teacher": teacher_to_add.username
+        }
+    })
+
+
+

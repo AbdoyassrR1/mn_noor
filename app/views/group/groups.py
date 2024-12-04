@@ -578,7 +578,7 @@ def add_teacher_to_group(group_id, teacher_id):
             "name": group_to_teach.group,
             "teacher": teacher_to_add.username
         }
-    })
+    }), 200
 
 
 
@@ -629,7 +629,7 @@ def get_teacher_of_group(group_id):
                 "last_name": group_to_view.teacher.last_name
             } if group_to_view.teacher else None
         }
-    })
+    }), 200
 
 
 

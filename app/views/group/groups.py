@@ -633,3 +633,39 @@ def get_teacher_of_group(group_id):
 
 
 
+@groups.route("/remove_teacher_from_group/<int:group_id>", methods=["DELETE"], strict_slashes=False)
+@login_required  # Ensure the user is logged in
+@limiter.limit("10/minute")  # Rate limit the endpoint
+def remove_teacher_from_group(group_id):
+
+    # Get the current logged-in user
+    user = current_user
+
+    # Ensure the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can remove teachers from groups.")
+
+    # Check if the group exists
+    group_to_edit = Group.query.options(joinedload(Group.teacher)).get(group_id)
+    if not group_to_edit:
+        abort(404, description=f"Group with ID {group_id} not found.")
+    
+    if not group_to_edit.teacher_id:
+        abort(404, description=f"Group with ID {group_id} has no teacher assigned.")
+
+    teacher_to_remove = group_to_edit.teacher
+
+    # Remove teacher from the group
+    group_to_edit.teacher_id = None
+    db.session.commit()
+
+    # Return a response
+    return jsonify({
+        "status": "success",
+        "message": f"Teacher ({teacher_to_remove.username}) has been successfully removed from the group ({group_to_edit.group}).",
+        "group": {
+            "id": group_to_edit.id,
+            "group": group_to_edit.group,
+            "teacher": None
+        }
+    }), 200

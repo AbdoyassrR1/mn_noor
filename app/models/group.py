@@ -19,7 +19,7 @@ class Group(BaseModel):
 
     # # many-to-many relationship
     days = relationship("Day", secondary="group_days", back_populates="groups", overlaps="group_days")
-    group_requests = relationship("User", secondary="group_requests",backref="group_requests", cascade="all, delete-orphan")
+    group_requests = relationship("User", secondary="group_requests",backref="group_requests")
 
     def __repr__(self):
         return f"<group: {self.group}, size: {self.size}, status: {self.status}>"

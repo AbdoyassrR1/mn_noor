@@ -13,9 +13,5 @@ class GroupRequest(BaseModel):
     status = Column(Enum("pending", "approved", "rejected", name="request_status"), nullable=False, default="pending")
     note = Column(Text, nullable=True)  # Optional note for request
 
-    # Relationships
-    user = relationship("User", back_populates="group_requests")
-    group = relationship("Group", back_populates="group_requests")
-
     def __repr__(self):
         return f"<GroupRequest user_id={self.user_id}, group_id={self.group_id}, role={self.role}, status={self.status}>"

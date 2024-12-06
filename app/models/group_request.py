@@ -14,4 +14,18 @@ class GroupRequest(BaseModel):
     note = Column(Text, nullable=True)  # Optional note for request
 
     def __repr__(self):
-        return f"<GroupRequest user_id={self.user_id}, group_id={self.group_id}, role={self.role}, status={self.status}>"
+        return f"<Request ID: {self.id} user_id={self.user_id}, group_id={self.group_id}, role={self.role}, status={self.status}>"
+
+    # Convert to dictionary for API response
+    def to_dict(self):
+        TIME = "%a, %d %b %Y %I:%M:%S %p"
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "group_id": self.group_id,
+            "role": self.role,
+            "status": self.status,
+            "note": self.note,
+            "created_at": self.created_at.strftime(TIME),
+            "updated_at": self.updated_at.strftime(TIME)
+        }

@@ -9,6 +9,7 @@ from app.models.group import Group
 from app.models.user import User
 from app.models.day import Day
 from app.models.group_day import GroupDay
+from app.models.group_request import GroupRequest
 
 groups = Blueprint("groups", __name__)
 
@@ -669,3 +670,68 @@ def remove_teacher_from_group(group_id):
             "teacher": None
         }
     }), 200
+
+
+@groups.route("/send_request/<int:group_id>", methods=["POST"])
+@login_required
+@limiter.limit("5/minute")
+def send_request_to_group(group_id):
+    """
+    Allows a user to send a request to join a group.
+    """
+    user = current_user
+    if not request.is_json:
+        abort(400, description="Invalid or missing JSON data. Ensure the request body contains valid JSON.")
+    
+    request_data = request.get_json(silent=False)
+
+    # Validate group existence
+    group = Group.query.get(group_id)
+    if not group:
+        abort(404, description="Group not found.")
+
+    required_fields = ["action"]
+
+    # Check for missing fields
+    missing_fields = [field for field in required_fields if field not in request_data]
+    if missing_fields:
+        abort(400, description=f"Missing fields: {', '.join(missing_fields)}")
+    
+    # Check for empty fields
+    empty_fields = [field for field in required_fields if not request_data[field]]
+    if empty_fields:
+        abort(400, description=f"Empty fields: {', '.join(empty_fields)}")
+
+    role = user.role.role
+    note = request_data.get("note", None)
+    action = request_data.get("action")
+
+    # Validate role
+    if role not in {"student", "teacher"}:
+        abort(400, description="Invalid role. Must be 'student' or 'teacher'.")
+
+    # Validate action
+    if action not in {"join", "leave"}:
+        abort(400, description="Invalid action. Must be 'join' or 'leave'.")
+
+    # Check for existing request
+    existing_request = GroupRequest.query.filter_by(user_id=user.id, group_id=group.id, status="pending").first()
+    if existing_request:
+        abort(409, description="You already have a pending request for this group.")
+
+    # Add a new request
+    new_request = GroupRequest(
+        user_id=user.id,
+        group_id=group.id,
+        role=role,
+        action=action,
+        note=note,
+    )
+    db.session.add(new_request)
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Request Has Been Sent Successfully to group {group.group}.",
+        "request": new_request.to_dict()
+    }), 201

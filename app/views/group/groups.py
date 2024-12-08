@@ -58,11 +58,18 @@ def get_groups():
     per_page = request.args.get("per_page", default=10, type=int)
     paginated_groups = all_groups.paginate(page=page, per_page=per_page, error_out=False)
 
+    all_groups = [group.to_dict() for group in paginated_groups.items]
+    
     # If no groups were found
     if not paginated_groups.items:
-        abort(404, description="No Groups Found")
-
-    all_groups = [group.to_dict() for group in paginated_groups.items]
+        return jsonify({
+            "requests": all_groups,
+            "total_requests": paginated_groups.total,
+            "total_pages": paginated_groups.pages,
+            "current_page": paginated_groups.page,
+            "next_page": None,
+            "prev_page": None,
+        })
 
     # Return the groups with pagination metadata
     return jsonify({

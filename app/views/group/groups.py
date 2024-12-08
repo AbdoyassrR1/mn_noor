@@ -56,20 +56,13 @@ def get_groups():
     # handle pagination
     page = request.args.get("page", default=1, type=int)
     per_page = request.args.get("per_page", default=10, type=int)
+
+    if page <= 0 or per_page <= 0:
+        abort(400, description="Pagination parameters must be positive integers.")
+
     paginated_groups = all_groups.paginate(page=page, per_page=per_page, error_out=False)
 
     all_groups = [group.to_dict() for group in paginated_groups.items]
-    
-    # If no groups were found
-    if not paginated_groups.items:
-        return jsonify({
-            "requests": all_groups,
-            "total_requests": paginated_groups.total,
-            "total_pages": paginated_groups.pages,
-            "current_page": paginated_groups.page,
-            "next_page": None,
-            "prev_page": None,
-        })
 
     # Return the groups with pagination metadata
     return jsonify({

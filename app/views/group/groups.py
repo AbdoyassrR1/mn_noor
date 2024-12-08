@@ -742,3 +742,51 @@ def send_request_to_group(group_id):
         "message": f"Request Has Been Sent Successfully to group {group.group}.",
         "request": new_request.to_dict()
     }), 201
+
+
+@groups.route("/pending_requests", methods=["GET"])
+@login_required
+def view_pending_requests():
+    """
+    Allows admins to view all pending requests.
+    """
+    user = current_user
+
+    # Ensure the user is an admin
+    if user.role.role != "admin":
+        abort(403, description="Only admins can view pending requests.")
+    
+    query = GroupRequest.query
+
+    # handle query parameters for filtering
+    group_id = request.args.get("group_id")
+
+    if group_id:
+        try:
+            group_id = int(group_id)
+            query = query.filter_by(group_id=group_id)
+        except ValueError:
+            abort(400, description="Group ID Must be an INTEGER.")
+
+    query = query.filter_by(status="pending")
+
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=10, type=int)
+
+    if page <= 0 or per_page <= 0:
+        abort(400, description="Pagination parameters must be positive integers.")
+
+    paginated_requests = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Fetch pending requests
+    pending_requests = [req.to_dict() for req in paginated_requests.items]
+
+    # Return the groups with pagination metadata
+    return jsonify({
+        "requests": pending_requests,
+        "total_requests": paginated_requests.total,
+        "total_pages": paginated_requests.pages,
+        "current_page": paginated_requests.page,
+        "next_page": paginated_requests.next_num if paginated_requests.has_next else None,
+        "prev_page": paginated_requests.prev_num if paginated_requests.has_prev else None,
+    })
